@@ -1,0 +1,16 @@
+Настройка ssh:
+	cp /etc/ssh/ssh_config /opt/myprojects/origin_configs/ssh_config_origin  # - на всякий случай сохраняем конфиг ssh
+	echo "ForwardAgent Yes" >> /etc/ssh/ssh_config
+	service ssh restart
+	
+	Запуск ssh-agent:
+		killall ssh-agent # -на всякий случай
+		eval `ssh-agent`
+	
+	Для подключения к узлам за bastion:
+		ssh-add -L
+		ssh-add ~/.ssh/appuser
+		ssh -i ~/.ssh/appuser -A appuser@35.205.102.23
+		
+		Подключаемся к узлу за бастионом:
+			ssh 10.132.0.4
