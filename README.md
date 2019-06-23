@@ -109,4 +109,3 @@ Homework №4 cloud-testapp:
 	6. Создан скрипт для создания правила фаерволла firewall_puma.sh:
 		#!/bin/bash
 		gcloud compute firewall-rules create puma-server --target-tags puma-server --allow tcp:9292
-
