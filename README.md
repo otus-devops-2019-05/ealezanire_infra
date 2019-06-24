@@ -2,10 +2,12 @@
 ealezanire Infra repository
 
 Homework №3 cloud-bastion:
+
 	1. Произведена регистрация на GCP.
 	Создание виртуальных хостов и настройка сети:
 		bastion_IP = 35.207.159.187
 		someinternalhost_IP = 10.156.0.3
+		
 	2. Настройка подключения по ssh:
 		В конфигурации ssh включаем ForwardAgent:
 			echo "ForwardAgent Yes" >> /etc/ssh/ssh_config
@@ -16,7 +18,9 @@ Homework №3 cloud-bastion:
 				ssh -i ~/.ssh/appuser -A appuser@35.207.159.187
 			someinternalhost:
 				ssh -i ~/.ssh/appuser -tt -A appuser@35.207.159.187 ssh appuser@10.156.0.3
+				
 		Дополнительное задание:
+		
 			В /etc/ssh/ssh_config добавляем alias:
 				Host bastion
 					User appuser
@@ -34,6 +38,7 @@ Homework №3 cloud-bastion:
 					ProxyCommand ssh bastion nc %h %p		
 				Теперь, для подключения к хосту за basion достаточно ввести команду:
 					ssh someinternalhost
+					
 		3. Создание VPN-сервера для GCP.
 			На bastion создаем скрипт setupvpn.sh.
 			https://gist.github.com/Nklya/df07e99e63e4043e6a699060a7e30b66
@@ -43,7 +48,9 @@ Homework №3 cloud-bastion:
 			Проведена настройка pritunl, настройка фаервола GCP.
 			Скачал файл с конфигурацией для подключения по VPN. Проверил подключение с Windows 
 			и Debian. Подключился по ssh напрямую к someinternalhost.
+			
 Homework №4 cloud-testapp:
+
 	1. Установлен gcloud
 		echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
 		apt-get install apt-transport-https ca-certificates
@@ -52,6 +59,7 @@ Homework №4 cloud-testapp:
 		apt-get update && sudo apt-get install google-cloud-sdk
 		gcloud init
 		Проведена инициализация gloud.
+		
 	2. Через gcloud cli создана виртуальная машина reddit-app.
 		https://gist.githubusercontent.com/Nklya/5bc429c6ca9adce1f7898e7228788fe5/raw/01f9e4a1bf00b4c8a37ca6046e3e4d4721a3316a/gcloud
 		Установлены ruby и bundler:
@@ -71,10 +79,12 @@ Homework №4 cloud-testapp:
 		Подключился к веб интерфейсу приложения через http://35.198.165.5:9292
 		testapp_IP = 35.198.165.5
 		testapp_port = 9292
+		
 	3. Созданы скрипты для развертывания приложения на сервере:
 		install_ruby.sh
 		install_mongodb.sh
 		deploy.sh
+		
 	4. Создан startup_script.sh для автоматической настройки и запуска приложения при создании инстанса:
 		#!/bin/bash
 		DIRECTORY='/home/appuser'
@@ -96,6 +106,7 @@ Homework №4 cloud-testapp:
 		git clone -b monolith https://github.com/express42/reddit.git
 		cd reddit && bundle install
 		puma -d
+		
 	5. Обновлен скрипт для создания инстанса deploy_puma.sh:
 		#!/bin/sh
 		gcloud compute instances create reddit-app\
@@ -106,6 +117,7 @@ Homework №4 cloud-testapp:
 			  --tags puma-server \
 			  --restart-on-failure \
 			  --metadata-from-file startup-script=startup_script.sh
+			  
 	6. Создан скрипт для создания правила фаерволла firewall_puma.sh:
 		#!/bin/bash
 		gcloud compute firewall-rules create puma-server --target-tags puma-server --allow tcp:9292
