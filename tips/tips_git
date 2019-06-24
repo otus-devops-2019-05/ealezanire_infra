@@ -1,0 +1,22 @@
+Ссылки: 
+	https://git-scm.com/doc
+	https://githowto.com/ru/undoing_committed_changes
+
+Git-
+	Создание репозитория:
+		git init - создает репозиторий в текущем коталоге
+		git add - добавляет файл(директорию) в систему контроля версий
+	Обновить локальный репозиторий:
+		git fetch - скачивает изменения с удаленного сервера (не применяет их)
+		git pull - устанавливает загруженные изменения
+	Зaгрузить репозиторий с github:
+		git clone https://github.com/otus-devops-2019-05/ealezanire_infra.git
+	Загрузить изменения на сервер:
+		git push https://github.com/otus-devops-2019-05/ealezanire_infra.git
+	Работа с ветками:
+		git checkout master - переместиться в ветку master
+		git checkout [file_name] - Используйте команду checkout для переключения в версию файла в репозитории до коммита и индексации
+		git reset HEAD [file_name] - Отменяет изменения после индексации
+		git checkout -b [new_branch] - Создать новую ветку и перейти в неё. Аналог:
+			git branch [new_branch]
+			git checkout [new_branch]
