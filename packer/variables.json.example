@@ -1,0 +1,7 @@
+{
+     "variables":{
+        "pr_id_var": "test_data_id",
+        "s_im_fam_var": "test_data_image",
+        "m_type_var": "test_data_m_type"
+    }
+}

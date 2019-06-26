@@ -1,26 +1,30 @@
 {
-	"builders": [
-		{
-			"type": "googlecompute",
-            		"project_id": "infra-244218",
-            		"image_name": "reddit-base-{{timestamp}}",
-            		"image_family": "reddit-base",
-            		"source_image_family": "ubuntu-1604-lts",
-            		"zone": "europe-west1-b",
-            		"ssh_username": "appuser",
-            		"machine_type": "f1-micro"
-        	}
-    			],
-	"provisioners": [
-			{
-				"type": "shell",
-				"script": "scripts/install_ruby.sh",
-				"execute_command": "sudo {{.Path}}"
-			},
-			{
-				"type": "shell",
-				"script": "scripts/install_mongodb.sh",
-				"execute_command": "sudo {{.Path}}"
-			}
-		]
+                        "builders": [
+                        {
+                            "type": "googlecompute",
+                            "project_id": "{{user `pr_id_var`}}",
+                            "image_name": "reddit-base-{{timestamp}}",
+                            "image_family": "reddit-base",
+                            "source_image_family": "{{user `s_im_fam_var`}}",
+                            "zone": "europe-west1-b",
+                            "ssh_username": "appuser",
+                            "machine_type": "{{user `m_type_var`}}",
+                            "tags": "puma-server",
+                            "disk_size": "15",
+                            "image_description": "bla bla bla",
+                            "network": "default"
+                        }
+                    ],
+                    "provisioners": [
+                                {
+                                        "type": "shell",
+                                        "script": "scripts/install_ruby.sh",
+                                        "execute_command": "sudo {{.Path}}"
+                                },
+                                {
+                                        "type": "shell",
+                                        "script": "scripts/install_mongodb.sh",
+                                        "execute_command": "sudo {{.Path}}"
+                                }
+                        ]
 }
