@@ -11,7 +11,7 @@ Homework №3 cloud-bastion:
 	2. Настройка подключения по ssh:
 		В конфигурации ssh включаем ForwardAgent:
 			echo "ForwardAgent Yes" >> /etc/ssh/ssh_config
-		Запуск ssh-agent: val `ssh-agent`
+		Запуск ssh-agent: eval `ssh-agent`
 		Подключение к узлам:
 			ssh-add ~/.ssh/appuser
 			bastion:
@@ -121,3 +121,103 @@ Homework №4 cloud-testapp:
 	6. Создан скрипт для создания правила фаерволла firewall_puma.sh:
 		#!/bin/bash
 		gcloud compute firewall-rules create puma-server --target-tags puma-server --allow tcp:9292
+
+Homework №5 packer:
+
+	1. Установка Packer:
+		wget https://releases.hashicorp.com/packer/1.4.1/packer_1.4.1_linux_amd64.zip /opt
+		unzip packer_1.4.1_linux_amd64.zip
+		rm *.zip
+		ln -s /opt/packer /usr/bin/
+
+	2. Настройка Application Default Credentials (ADC):
+		gcloud auth application-default login
+		Переходим по ссылке, получаем код и копируем его в поле : "Enter verification code"
+		
+		Получаем следующий вывод:
+		
+			Credentials saved to file: [/root/.config/gcloud/application_default_credentials.json]
+
+			These credentials will be used by any library that requests
+			Application Default Credentials.
+
+			To generate an access token for other uses, run:
+			gcloud auth application-default print-access-token
+
+	3. Packer builder:
+		
+		В параметре project_id указываем свой id(можно достать из GCP или командой за консоли:
+			gcloud projects list)
+
+		Создаем шаблон следующего содержания:
+		{
+			"builders": [
+		        {
+		            "type": "googlecompute",
+		            "project_id": "infra-244218",
+		            "image_name": "reddit-base-{{timestamp}}",
+		            "image_family": "reddit-base",
+		            "source_image_family": "ubuntu-1604-lts",
+		            "zone": "europe-west1-b",
+		            "ssh_username": "appuser",
+		            "machine_type": "f1-micro"
+		        }
+		    ],
+		    "provisioners": [
+				{
+					"type": "shell",
+					"script": "scripts/install_ruby.sh",
+					"execute_command": "sudo {{.Path}}"
+				},
+				{
+					"type": "shell",
+					"script": "scripts/install_mongodb.sh",
+					"execute_command": "sudo {{.Path}}"
+				}
+			]
+		}
+		
+			Подправляем скрипты, поскольку в конфиге packer уже указано, что все команды используются
+			с sudo. В корне packer создаем директорию для инсталяционных скриптов и копируем их из
+			config-scripts, в корне проекта, туда. После, проверяем наш темплейт:
+				packer validate ./ubuntu16.json
+			Пример создания образа:
+				packer build -var-file=variables.json template.json
+
+		После запуска скрипта проверяем, что в GCP ->Compute Engine ->Images появился созданный нами образ.
+
+	4. Gcloud custom image:
+		https://cloud.google.com/compute/docs/images/create-delete-deprecate-private-images
+
+		Создаем инстанс на основе нашего образа командой:
+			gcloud compute instances create reddit-app\
+				--boot-disk-size=10GB \
+				--image-family reddit-base \
+				 --machine-type=g1-small \
+				--tags puma-server \
+				--restart-on-failure 
+
+		Найти имя созданного образа можно командой:
+			gcloud compute images list | grep reddit
+
+		Задаем правило фаерволла для инстансов с тегом puma-server:
+			gcloud compute firewall-rules create puma-server --target-tags puma-server --allow tcp:9292
+	
+		Вывести список всех правил фаерволла:
+			gcloud compute firewall-rules list
+		
+		Получаем информацию о нашем инстансе:
+			gcloud compute instances list | grep reddit-app
+
+	5. Донастраиваем наше приложение согласно предидущим заданиям:
+		eval `ssh-agent`
+		ssh-add ~/.ssh/appuser
+		ssh -i ~/.ssh/appuser -A appuser@35.242.193.91
+		Попутно обновляем known_hosts, поскольку за этим ip у нас уже были записи.
+		После установки и запуска приложения puma, проверяем, что она работает (ps aux | grep puma).
+		Подключаемся, создаем пользователя и логинимся. 
+
+
+
+
+

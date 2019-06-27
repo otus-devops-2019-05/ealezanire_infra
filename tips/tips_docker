@@ -1,0 +1,59 @@
+Установка Docker:
+	https://docs.docker.com/install/linux/docker-ce/debian/
+	В документации всё написано, в принципе на чем то акцентировать внимание не вижу смысла.
+	Можно столкнуться с тем, что будет установлена старая версия, тогда подключаем репу из Ubuntu.
+
+Установка docker-compose:
+	https://github.com/docker/compose/releases - смотрим актуальные версии и устанавливаем.
+	curl -L https://github.com/docker/compose/releases/download/1.25.0-rc1/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+	chmod +x /usr/local/bin/docker-compose
+
+	Если не гнаться за новыми версиями, то можно сразу через apt поставить. Но, в репозиториях Debian, как правило старые версии пакетов стоят. Из за 
+	этого можно столкнуться с проблемами, при чтении документации. Так что, лучше ставить более актуальную версию.
+
+Базовые команды:
+	docker --version
+
+	docker ps	список запущенных контейнеров.
+		--help расскажет нам о дополнительных ключах, вообще в docker после каждого набора команд можно использовать --help и посмотреть, какие команды 
+		можно использовать дальше.
+		Options:
+			-a, --all             Show all containers (default shows just running)
+			-f, --filter filter   Filter output based on conditions provided
+			    --format string   Pretty-print containers using a Go template
+			-n, --last int        Show n last created containers (includes all states) (default -1)
+			-l, --latest          Show the latest created container (includes all states)
+			    --no-trunc        Don't truncate output
+			-q, --quiet           Only display numeric IDs
+			-s, --size            Display total file sizes
+
+	docker images - список сохраненных образов.
+
+	docker search centos - поиск доступных образов centos
+		search позволяет стомтреть, какие образы доступны на dockerhub
+
+	Запуск контейнера в интерактивном режиме с терминалом:
+		docker run -it centos bash
+
+	docker run \
+		-v /opt/myprojects/docker/linux_ap/rpm_dir:/opt \
+		--name linux-ap \
+		--rm -w /opt \
+        --net macvlan-ens256 \
+        --ip 192.168.254.30 \
+        --net bridge \
+        --hostname centos_ap \
+        -i -t centos /bin/bash
+
+    При необходимости использовать service , systemctl возникают проблемы.
+    Решить пока не смог.
+    Материал для изучания:
+    	https://www.hippolab.ru/zapuskaem-systemd-v-docker-konteynere
+    	https://developers.redhat.com/blog/2014/05/05/running-systemd-within-docker-container/
+    	https://developers.redhat.com/blog/2016/09/13/running-systemd-in-a-non-privileged-container/
+    	https://serverfault.com/questions/824975/failed-to-get-d-bus-connection-operation-not-permitted
+
+    	https://habr.com/ru/company/flant/blog/336654/
+
+
+				
