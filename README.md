@@ -181,6 +181,8 @@ Homework №5 packer:
 			с sudo. В корне packer создаем директорию для инсталяционных скриптов и копируем их из
 			config-scripts, в корне проекта, туда. После, проверяем наш темплейт:
 				packer validate ./ubuntu16.json
+			Пример создания образа:
+				packer build -var-file=variables.json template.json
 
 		После запуска скрипта проверяем, что в GCP ->Compute Engine ->Images появился созданный нами образ.
 
