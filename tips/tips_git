@@ -1,6 +1,7 @@
 Ссылки: 
 	https://git-scm.com/doc
 	https://githowto.com/ru/undoing_committed_changes
+	https://habr.com/ru/company/mailru/blog/267595/
 
 Git-
 	Создание репозитория:
@@ -20,3 +21,12 @@ Git-
 		git checkout -b [new_branch] - Создать новую ветку и перейти в неё. Аналог:
 			git branch [new_branch]
 			git checkout [new_branch]
+	Работа с логами:
+		git log
+		git log --oneline --graph 
+		man git-log :)
+		git log -p filename Вывод актуальных изменений в файл
+		git log -L 1,1:some-file.txt Просмотр изменений в определённых строках файла
+	Работа с файлами:
+		git show some-branch:some-file.js Извлечение файла из другой ветки
+
