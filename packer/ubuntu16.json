@@ -10,7 +10,7 @@
                             "ssh_username": "appuser",
                             "machine_type": "{{user `m_type_var`}}",
                             "tags": "puma-server",
-                            "disk_size": "15",
+                            "disk_size": "10",
                             "image_description": "bla bla bla",
                             "network": "default"
                         }

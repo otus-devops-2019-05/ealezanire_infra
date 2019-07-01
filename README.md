@@ -217,7 +217,210 @@ Homework №5 packer:
 		После установки и запуска приложения puma, проверяем, что она работает (ps aux | grep puma).
 		Подключаемся, создаем пользователя и логинимся. 
 
+Homework №6 terraform:
+
+	1. Установка:
+		Версия, необходимая для курса, находится тут:
+			https://releases.hashicorp.com/terraform/0.11.11/terraform_0.11.11_linux_amd64.zip
+		Остальные: https://releases.hashicorp.com/terraform/ или, релизная версия:
+			https://www.terraform.io/downloads.html
+		Загружаем нужную версию, распаковываем и создаем на неё ссылку в директории /usr/bin 
+
+	2. В репозитории создаем новую ветку, там директорию для работы и конфигурационный файл для terraform:
+		git checkout -b terraform-1
+		mkdir tarraform
+		touch terraform/main.tf
+
+		В .gitignore добавляем:
+			*.tfstate
+			*.tfstate.*.backup
+			*.tfstate.backup
+			*.tfvars
+			.terraform/
+		Это тот мусор, который будет создавать terraform, в процессе работы.
+
+	3. Содержимое main.tf:
+
+		terraform {
+        # Версия terraform
+        required_version = "0.11.11"
+		}
+		provider "google" {
+		# Версия провайдера
+		        version = "2.0.0"
+		        # ID проекта
+		        project = "infra-244218"
+		        region = "europe-west-1"
+		}
+
+		resource "google_compute_instance" "app" {
+		        name = "reddit-app"
+		        machine_type = "g1-small"
+		        zone = "europe-west1-b"
+		# определение загрузочного диска
+		boot_disk {
+		        initialize_params {
+		                image = "reddit-base"
+		                }
+		        }
+		# определение сетевого интерфейса
+		network_interface {
+		        # сеть, к которой присоединить данный интерфейс
+		        network = "default"
+		        # использовать ephemeral IP для доступа из Интернет
+		        access_config {}
+		        }
+		}
 
 
+		Перед запуском необходимо провести инициализацию terraform:
+			terraform init
+		Для просмотра, какие изменения будут проведены используем:
+			terraform plan
+		Запуск изменений:
+			terraform apply
+			Ключ -auto-approve=true отключит необходимлсть подтверждения изменений при работе скрипта.
 
+	4. В main.tf добавляем открытый ключ для подключения через ssh:
+		resource "google_compute_instance" "app" {...
+			metadata {
+				# путь до публичного ключа
+				ssh-keys = "appuser:${file("~/.ssh/appuser.pub")}"
+				}
+			...
+		}
+
+	5. Для получения внешнего ip адреса инстанса:
+		Создаем outputs.tf следующего содержания:
+			output "app_external_ip" {
+        		value = "${google_compute_instance.app.network_interface.0.access_config.0.nat_ip}"
+			}
+
+		Для обновления данных используем:
+			terraform refresh
+			На выходе у нас будет ip адрес созданного инстанса.
+
+		Если выходных данных много:
+			terraform output app_external_ip - получаем информацию только по определенному параметру.
+
+	6. Создаем правило фаервола, в main.tf добавляем:
+
+		resource "google_compute_firewall" "firewall_puma" {
+			name = "allow-puma-default"
+			# Название сети, в которой действует правило
+			network = "default"
+			# Какой доступ разрешить
+			allow {
+				protocol = "tcp"
+				ports = ["9292"]
+			}
+			# Каким адресам разрешаем доступ
+			source_ranges = ["0.0.0.0/0"]
+			# Правило применимо для инстансов с перечисленными тэгами
+			target_tags = ["reddit-app"]
+		}
+
+		Добавляем тег:
+			tags = ["reddit-app"]
+			в секцию resource "google_compute_instance" "app" .
+			В противном случае, правило фаерволла на наш инстанс не действует.
+
+	7. Настройка автозапуска приложения:
+
+		Создаем Unit puma.service для systemctl:
+
+			[Unit]
+			Description=Puma HTTP Server
+			After=network.target
+
+			[Service]
+			Type=simple
+			User=appuser
+			WorkingDirectory=/home/appuser/reddit
+			ExecStart=/bin/bash -lc 'puma'
+			Restart=always
+
+			[Install]
+			WantedBy=multi-user.target
+
+		Скрипт для установки приложения и добавления его в сервисы deploy.sh:
+
+			#!/bin/bash
+			set -e
+
+			APP_DIR=${1:-$HOME}
+
+			git clone -b monolith https://github.com/express42/reddit.git $APP_DIR/reddit
+			cd $APP_DIR/reddit
+			bundle install
+
+			sudo mv /tmp/puma.service /etc/systemd/system/puma.service
+			sudo systemctl start puma
+			sudo systemctl enable puma
+
+		Добавляем provisioner, который буде копировать наши скрипты и конфигурационные файлы:
+			resource "google_compute_instance" "app" {
+				provisioner "file" {
+                source = "files/puma.service"
+                destination = "/tmp/puma.service"
+        		}
+        		provisioner "remote-exec" {
+                	script = "files/deploy.sh"
+        		}
+
+			}
+
+			Провижинеры выполняются по порядку. Подключение к ВМ производится через ssh/
+			Для этого мы добавляем следующую информацию перед провижинерами:
+				connection {
+					type = "ssh"
+					user = "appuser"
+					agent = false
+					# путь до приватного ключа
+					private_key = "${file("root/.ssh/appuser")}"
+				}
+
+	8. Использование переменных в terraform. 
+		Для работы с переменными на потребуется их определить. Для этого создаем файл variables.tf со следующим содержимым:
+			variable project {
+				description = "Project ID"
+				}
+				variable region {
+					description = "Region"
+					# Значение по умолчанию
+					default = "europe-west1"
+				}
+				variable public_key_path {
+					# Описание переменной
+					description = "Path to the public key used for ssh access"
+				}
+				variable disk_image {
+					description = "Disk image"
+			}
+
+		Добавим переменные в main.tf. Синтаксис "${var.var_name}", например:
+
+				provider "google" {
+					version = "2.0.0"
+					project = "${var.project}"
+					region = "${var.region}"
+				}
+
+		Создадим файл с нашими переменными terraform.tfvars:
+			project = "infra-000000"
+			public_key_path = "~/.ssh/appuser.pub"
+			disk_image = "reddit-base"
+
+			Это не совсем то, что у меня, только образец.
+
+		9. Проверка:
+			terraform destroy - удаляем всё, что мы настроили.
+			terraform plan - смотим список задач.
+			terraform apply - запускаем изменение.
+
+		10. Добавляем переменную для приветного ключа.
+		Добавляем в список переменных регион, отличный от дефолтного.
+		Запускаем форматирование конфигов:
+			terraform fmt;
+		Добавляем файл terraform.tfvars.example как образец для проверок.
 
