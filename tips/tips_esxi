@@ -1,0 +1,21 @@
+Установленная версия ESXI 6.5
+
+Top 20 Essential ESXCLI Commands You Need to Know:
+	https://www.altaro.com/vmware/top-20-esxcli-commands/
+	http://winitpro.ru/index.php/2018/04/18/poleznye-komandy-vmware-esxi/  - наглядно и просто.
+
+Allowing SSH access to ESXi/ESX hosts with public/private key authentication:
+	https://kb.vmware.com/s/article/1002866
+	
+	Для работы с хостом без использования авторизации логин/пароль в файл /etc/ssh/keys-<username>/authorized_keys нужно закинуть свой открытый ключ.
+	Изначально, при копировании через ssh-copy-id, ключ записывается в /.ssh/authorized_keys
+	После перезапускаем sshd и пробуем подключиться.
+
+
+Небольшой пример по работе с виртуалками:
+	vim-cmd vmsvc/getallvms | grep DevOps
+	vim-cmd vmsvc/power.on 19
+	vim-cmd vmsvc/power.off 19 — выключить (по питанию) VM с Vmid 19
+	vim-cmd vmsvc/power.shutdown 1 — корректное выключение VM с Vmid 1. Действует только, если установлены VMware Tools!
+	vim-cmd vmsvc/get.summary 1 | egrep ‘(name|power|ip)’ — получение отфильтрованной информации о VM с Vmid 1. Выводится имя, состояние питания, IP-адрес
+	

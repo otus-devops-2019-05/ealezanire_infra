@@ -1,6 +1,9 @@
 Installing zsh and plugin "oh-my-zsh":
 https://github.com/robbyrussell/oh-my-zsh/blob/master/README.md
 
+dns server
+https://www.8host.com/blog/bind-kak-dns-server-dlya-chastnoj-seti-v-debian-9/
+
 Для установки тревиса потребовалось установить:
 cmake gcc libffi-dev ruby-dev rubygems
 apt-get install ruby`ruby -e 'puts RUBY_VERSION[/\d+\.\d+/]'`-dev

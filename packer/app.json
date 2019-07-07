@@ -1,0 +1,26 @@
+{
+                        "builders": [
+                        {
+                            "type": "googlecompute",
+                            "project_id": "{{user `pr_id_var`}}",
+                            "image_name": "reddit-base-app{{timestamp}}",
+                            "image_family": "reddit-base",
+                            "source_image_family": "{{user `s_im_fam_var`}}",
+                            "zone": "europe-west1-b",
+                            "ssh_username": "appuser",
+                            "machine_type": "{{user `m_type_var`}}",
+                            "tags": "reddit-app",
+                            "disk_size": "10",
+                            "image_description": "image with reddit app",
+                            "network": "default"
+                        }
+                    ],
+                    "provisioners": [
+                                {
+                                        "type": "shell",
+                                        "script": "files/install_app.sh",
+                                        "execute_command": "sudo {{.Path}}"
+                                }
+                        ]
+}
+
