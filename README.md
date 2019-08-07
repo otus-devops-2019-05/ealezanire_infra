@@ -182,7 +182,7 @@ Homework №5 packer:
 			config-scripts, в корне проекта, туда. После, проверяем наш темплейт:
 				packer validate ./ubuntu16.json
 			Пример создания образа:
-				packer build -var-file=variables.json template.json
+				packer build -var-file=variables.json ./ubuntu16.json
 
 		После запуска скрипта проверяем, что в GCP ->Compute Engine ->Images появился созданный нами образ.
 
@@ -418,9 +418,61 @@ Homework №6 terraform:
 			terraform plan - смотим список задач.
 			terraform apply - запускаем изменение.
 
-		10. Добавляем переменную для приветного ключа.
+		10. Добавляем переменную для приватного ключа.
 		Добавляем в список переменных регион, отличный от дефолтного.
 		Запускаем форматирование конфигов:
 			terraform fmt;
 		Добавляем файл terraform.tfvars.example как образец для проверок.
 
+	Homework №7 terraform-2:
+
+		1. Предварительная подготовка:
+
+			Для удобства работы с виртуальной машиной через ssh установлен и настроен Visual studio code.
+			Нfстроено подключение к ней через ssh. Дальнейшее выполнение команд и скриптов будет проводиться через sudo.
+
+			При развертывании образа с mongodb возникли проблемы из-за ключей в репозитории.
+			apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927 использование данного ключа стало приводить к следующей ошибке:
+				"he following signatures couldn't be verified because the public key is not available"
+			Для решения данной проблемы взял пример добавления ключа и репозитория с официального сайта https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/.
+
+			Ключи берем отсюда:
+				https://www.mongodb.org/static/pgp/
+
+			В скрипте для создания образа через packer были изменен код, отвечающий за загрузку ключа и добавление репозитория на следующий:
+				sudo wget -qO - https://www.mongodb.org/static/pgp/server-3.2.asc | sudo apt-key add -
+				sudo bash -c 'echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list'
+
+			Разбиваем образ с приложением на два отдельных образа, на одном из которых будет база данных, на втором - само приложение:
+				Создается два новых конфигурационных файлов для packer:
+					app.json
+					db.json
+				Создаем init файл - это позволит запускать наше приложение автоматичаски, после развертывания:
+					[Unit]
+					Description=Puma HTTP Server
+					After=network.target
+
+					[Service]
+					Type=simple
+					User=appuser
+					WorkingDirectory=/home/appuser/reddit
+					ExecStart=/bin/bash -lc 'puma'
+					Restart=always
+
+					[Install]
+					WantedBy=multi-user.target
+
+			Готовим образы для дальнейшей работы:
+				cd packer
+				sudo packer build -var-file=variables.json ./app.json
+				sudo packer build -var-file=variables.json ./db.json
+
+				При развертывании наткнулся на следующую проблему:
+					Когда мы удаляем конфигурацию терраформа - terraform destroy, мы, так же, удаляем правило фаерволла для доступа по ssh, а без него packer собрать образ не может.
+
+			Проверяем работоспособность:
+				cd terraform
+				sudo terraform apply -auto-approve=true
+
+		2. Импортируем существующую инфраструктуру в terraform:
+			sudo terraform import google_compute_firewall.firewall_ssh default-allow-ssh
